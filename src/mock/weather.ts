@@ -238,7 +238,7 @@ export function generateWarningData(): WarningData[] {
 
 // 生成站点数据
 export function generateStationData(): StationData[] {
-  const stations: StationData[] = [
+  const stations = [
     { id: 'S001', name: '北京站', lat: 39.9042, lng: 116.4074 },
     { id: 'S002', name: '海淀站', lat: 39.9592, lng: 116.3261 },
     { id: 'S003', name: '朝阳站', lat: 39.9215, lng: 116.4435 },
@@ -252,7 +252,7 @@ export function generateStationData(): StationData[] {
   ]
 
   return stations.map(station => {
-    const weather = randomPick(['sunny', 'cloudy', 'overcast', 'rain'])
+    const weather = randomPick<WeatherType>(['sunny', 'cloudy', 'overcast', 'rain'])
     return {
       ...station,
       temperature: random(22, 35),
