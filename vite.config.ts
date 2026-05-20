@@ -7,6 +7,7 @@ import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import { resolve } from 'path'
 
 export default defineConfig({
+  base: '/meteo-radar/',
   plugins: [
     vue(),
     UnoCSS(),

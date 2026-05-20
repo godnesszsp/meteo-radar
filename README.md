@@ -1,10 +1,10 @@
 <p align="center">
   <h1 align="center">MeteoRadar</h1>
-  <p align="center">气象雷达预测系统 - 专业的气象数据可视化大屏</p>
+  <p align="center">气象雷达预测系统 + AI 知识库</p>
 </p>
 
 <p align="center">
-  <a href="https://github.com/godnesszsp/meteo-radar/blob/main/LICENSE">
+  <a href="https://github.com/godnesszsp/meteo-radar/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
   </a>
   <a href="https://github.com/godnesszsp/meteo-radar">
@@ -22,19 +22,22 @@
 
 ## 预览
 
-> 🚀 一个基于 Vue 3 + ECharts 的专业气象数据可视化大屏系统
+**[在线预览](https://godnesszsp.github.io/meteo-radar/)**
+
+> 🚀 一个基于 Vue 3 + ECharts 的专业气象雷达预测系统，集成 AI 知识库，提供实时气象数据可视化、天气预测和智能问答服务。
 
 ### 功能特性
 
 - 🌡️ **实时气象数据** - 温度、湿度、风速、气压等实时数据展示
 - 📊 **数据可视化** - ECharts 图表，直观展示气象数据
-- 🗺️ **雷达地图** - 雷达回波图、气象站点标记
+- 🗺️ **雷达地图** - 高德地图集成，雷达回波图、气象站点标记
 - 📅 **天气预测** - 7 天天气预测曲线图
 - ⚠️ **预警系统** - 气象预警信息展示
-- 🤖 **AI 助手** - 智能气象知识问答（侧边栏对话）
+- 🤖 **AI 知识库** - 智能气象知识问答，支持快捷查询
 - 🌿 **空气质量** - AQI 指数和污染物数据
 - 🖥️ **4K 大屏** - 3840x2160 分辨率适配
 - ✨ **科技感 UI** - 深色主题、发光效果、流畅动画
+- 📱 **全屏模式** - 支持全屏展示，适合大屏场景
 
 ## 技术栈
 
