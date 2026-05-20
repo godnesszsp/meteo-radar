@@ -366,8 +366,9 @@ export const aiResponses: Record<string, string> = {
 export function getAiResponse(question: string): string {
   const lowerQ = question.toLowerCase()
 
+  // 匹配预设回复
   for (const [key, value] of Object.entries(aiResponses)) {
-    if (lowerQ.includes(key.toLowerCase())) {
+    if (key !== 'default' && lowerQ.includes(key.toLowerCase())) {
       return value
     }
   }
@@ -380,5 +381,17 @@ export function getAiResponse(question: string): string {
     }
   }
 
-  return aiResponses['default']
+  // 自定义问题 - 提示知识库待接入
+  return `感谢您的提问："${question}"
+
+🔔 温馨提示：
+AI气象知识库正在建设中，目前仅支持以下快捷查询：
+• 城市天气查询（如：北京天气、上海天气）
+• 未来三天天气预测
+• 空气质量查询
+• 台风、紫外线等信息
+
+完整AI对话功能将在后续版本中接入大语言模型，届时可支持自由问答，敬请期待！
+
+如需更多气象信息，请访问中国气象局官网 www.cma.gov.cn`
 }

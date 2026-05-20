@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 
 const props = defineProps<{
   title: string
@@ -8,12 +8,59 @@ const props = defineProps<{
   icon?: string
   trend?: 'up' | 'down' | 'stable'
   color?: string
+  decimals?: number
 }>()
 
-const displayValue = ref(props.value)
+const displayValue = ref(0)
+const isAnimating = ref(false)
+const animationFrame = ref<number>()
 
-watch(() => props.value, (newVal) => {
-  displayValue.value = newVal
+const isNumeric = computed(() => typeof props.value === 'number')
+const formattedValue = computed(() => {
+  if (!isNumeric.value) return props.value
+  return displayValue.value.toFixed(props.decimals ?? 1)
+})
+
+function animateValue(start: number, end: number, duration: number = 800) {
+  if (animationFrame.value) {
+    cancelAnimationFrame(animationFrame.value)
+  }
+
+  isAnimating.value = true
+  const startTime = performance.now()
+  const difference = end - start
+
+  function update(currentTime: number) {
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+
+    // easeOutCubic 缓动函数
+    const easeOutCubic = 1 - Math.pow(1 - progress, 3)
+    displayValue.value = start + difference * easeOutCubic
+
+    if (progress < 1) {
+      animationFrame.value = requestAnimationFrame(update)
+    } else {
+      displayValue.value = end
+      isAnimating.value = false
+    }
+  }
+
+  animationFrame.value = requestAnimationFrame(update)
+}
+
+watch(() => props.value, (newVal, oldVal) => {
+  if (typeof newVal === 'number' && typeof oldVal === 'number') {
+    animateValue(oldVal, newVal)
+  } else {
+    displayValue.value = typeof newVal === 'number' ? newVal : 0
+  }
+})
+
+onMounted(() => {
+  if (typeof props.value === 'number') {
+    animateValue(0, props.value, 1200)
+  }
 })
 </script>
 
@@ -25,7 +72,9 @@ watch(() => props.value, (newVal) => {
     </div>
 
     <div class="card-body">
-      <span class="card-value">{{ displayValue }}</span>
+      <span :class="['card-value', { 'animating': isAnimating }]">
+        {{ isNumeric ? formattedValue : value }}
+      </span>
       <span class="card-unit" v-if="unit">{{ unit }}</span>
     </div>
 
@@ -38,6 +87,7 @@ watch(() => props.value, (newVal) => {
       </span>
     </div>
 
+    <div class="card-border-glow"></div>
     <div class="card-glow"></div>
   </div>
 </template>
@@ -54,8 +104,12 @@ watch(() => props.value, (newVal) => {
 
   &:hover {
     border-color: var(--accent-color);
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
-    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.25);
+    transform: translateY(-3px);
+
+    .card-border-glow {
+      opacity: 1;
+    }
   }
 }
 
@@ -87,6 +141,11 @@ watch(() => props.value, (newVal) => {
   font-weight: bold;
   color: var(--accent-color);
   text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  transition: text-shadow 0.3s ease;
+
+  &.animating {
+    text-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+  }
 }
 
 .card-unit {
@@ -122,6 +181,17 @@ watch(() => props.value, (newVal) => {
   color: rgba(255, 255, 255, 0.5);
 }
 
+.card-border-glow {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--accent-color);
+  border-radius: $radius-lg;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  animation: borderPulse 3s ease-in-out infinite;
+}
+
 .card-glow {
   position: absolute;
   top: -50%;
@@ -131,5 +201,14 @@ watch(() => props.value, (newVal) => {
   background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
   opacity: 0.05;
   pointer-events: none;
+}
+
+@keyframes borderPulse {
+  0%, 100% {
+    border-color: rgba(0, 212, 255, 0.3);
+  }
+  50% {
+    border-color: rgba(0, 212, 255, 0.6);
+  }
 }
 </style>

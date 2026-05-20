@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
+import { NIcon } from 'naive-ui'
+import { InformationCircleOutline } from '@vicons/ionicons5'
 import { useAppStore } from '@/stores/app'
 import { getAiResponse } from '@/mock/weather'
 
@@ -95,6 +97,7 @@ function handleKeydown(e: KeyboardEvent) {
         <div class="drawer-header">
           <span class="header-icon">🤖</span>
           <span class="header-title">AI气象助手</span>
+          <n-tag size="small" type="warning" :bordered="false">知识库建设中</n-tag>
           <n-button size="small" quaternary @click="clearMessages">
             清空对话
           </n-button>
@@ -138,6 +141,13 @@ function handleKeydown(e: KeyboardEvent) {
           <n-button size="small" @click="inputText = '上海天气'; sendMessage()">上海天气</n-button>
           <n-button size="small" @click="inputText = '未来三天天气'; sendMessage()">未来三天</n-button>
           <n-button size="small" @click="inputText = '空气质量'; sendMessage()">空气质量</n-button>
+          <n-button size="small" @click="inputText = '台风'; sendMessage()">台风</n-button>
+        </div>
+
+        <!-- 提示信息 -->
+        <div class="input-tip">
+          <n-icon size="14"><information-circle-outline /></n-icon>
+          <span>AI知识库接入后可支持自定义问答</span>
         </div>
 
         <!-- 输入区域 -->
@@ -294,6 +304,17 @@ function handleKeydown(e: KeyboardEvent) {
   font-size: $font-xs;
   color: rgba(255, 255, 255, 0.5);
   white-space: nowrap;
+}
+
+.input-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px $spacing-md;
+  font-size: $font-xs;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(250, 140, 22, 0.05);
+  border-top: 1px solid rgba(250, 140, 22, 0.1);
 }
 
 .input-area {
