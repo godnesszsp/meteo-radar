@@ -24,6 +24,10 @@
 
 **[在线预览](https://godnesszsp.github.io/meteo-radar/)**
 
+<p align="center">
+  <img src="docs/screenshot.png" alt="MeteoRadar 大屏预览" width="100%">
+</p>
+
 > 🚀 一个基于 Vue 3 + ECharts 的专业气象雷达预测系统，集成 AI 知识库，提供实时气象数据可视化、天气预测和智能问答服务。
 
 ### 功能特性
@@ -72,6 +76,22 @@ npm install
 # 或
 pnpm install
 ```
+
+### 环境变量配置
+
+复制 `.env.example` 为 `.env` 并配置：
+
+```bash
+cp .env.example .env
+```
+
+**高德地图 Key**：如需使用地图功能，请在 [高德开放平台](https://lbs.amap.com/) 申请 Key，并配置到 `.env`：
+
+```
+VITE_MAP_KEY=你的高德地图Key
+```
+
+> 注意：Key 需要配置 `github.io` 域名白名单才能在 GitHub Pages 上使用。
 
 ### 开发
 

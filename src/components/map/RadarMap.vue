@@ -9,6 +9,7 @@ const stations = ref<StationData[]>([])
 const radarData = ref<RadarData[]>([])
 const selectedStation = ref<StationData | null>(null)
 const mapReady = ref(false)
+const mapError = ref(false)
 const activeLayer = ref<'radar' | 'heatmap'>('radar')
 
 // 地图实例使用 shallowRef 避免深度响应
@@ -18,8 +19,8 @@ const AMap = shallowRef<any>(null)
 // 北京中心坐标
 const center = [116.4074, 39.9042]
 
-// 高德地图 Key（开发测试用）
-const MAP_KEY = 'e377454ce255d259fa3e15a56865e1c9'
+// 高德地图 Key（从环境变量读取，需在 .env 中配置）
+const MAP_KEY = import.meta.env.VITE_MAP_KEY || 'e377454ce255d259fa3e15a56865e1c9'
 
 async function initMap() {
   try {
@@ -39,6 +40,13 @@ async function initMap() {
       viewMode: '2D'
     })
 
+    // 监听地图鉴权失败（如 Key 无效）
+    map.value.on('error', () => {
+      console.warn('地图鉴权失败，使用备用显示')
+      mapError.value = true
+      mapReady.value = false
+    })
+
     // 添加控件
     map.value.addControl(new AMapSdk.Scale())
     map.value.addControl(new AMapSdk.ToolBar({ position: { bottom: '80px', right: '20px' } }))
@@ -52,6 +60,7 @@ async function initMap() {
     mapReady.value = true
   } catch (error) {
     console.error('地图加载失败:', error)
+    mapError.value = true
   }
 }
 
@@ -175,9 +184,21 @@ onUnmounted(() => {
     <div ref="mapContainer" class="map-container"></div>
 
     <!-- 加载状态 -->
-    <div v-if="!mapReady" class="map-loading">
+    <div v-if="!mapReady && !mapError" class="map-loading">
       <div class="loading-spinner"></div>
       <span>地图加载中...</span>
+    </div>
+
+    <!-- 加载失败 -->
+    <div v-if="mapError" class="map-error">
+      <span class="error-icon">🗺️</span>
+      <span class="error-text">地图加载失败，请刷新页面重试</span>
+      <div class="error-stations">
+        <div v-for="station in stations" :key="station.id" class="station-item">
+          <span class="station-name">{{ station.name }}</span>
+          <span class="station-temp">{{ station.temperature }}°C</span>
+        </div>
+      </div>
     </div>
 
     <!-- 地图控件层 -->
@@ -290,6 +311,60 @@ onUnmounted(() => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.map-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-md;
+  background: linear-gradient(135deg, #0a1628 0%, #0d2137 100%);
+  color: $accent;
+}
+
+.error-icon {
+  font-size: 64px;
+}
+
+.error-text {
+  font-size: $font-base;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.error-stations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  padding: $spacing-lg;
+  background: rgba(13, 31, 60, 0.5);
+  border-radius: $radius-lg;
+}
+
+.station-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: $radius-md;
+}
+
+.station-name {
+  font-size: $font-sm;
+  color: #fff;
+}
+
+.station-temp {
+  font-family: 'DIN', monospace;
+  font-size: $font-lg;
+  font-weight: bold;
+  color: $accent;
 }
 
 .map-overlay {
