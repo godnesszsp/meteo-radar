@@ -1,0 +1,20 @@
+# Build output
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Generated files
+*.d.ts
+src/auto-imports.d.ts
+src/components.d.ts
+
+# Other
+*.md
+*.svg
+*.png
+*.jpg
+*.gif
+package-lock.json
+pnpm-lock.yaml

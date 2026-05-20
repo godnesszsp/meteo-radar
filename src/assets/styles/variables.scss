@@ -1,0 +1,109 @@
+// 色彩变量
+$primary: #1890ff;
+$accent: #00d4ff;
+$purple: #722ed1;
+$warning: #fa8c16;
+$danger: #f5222d;
+$success: #52c41a;
+
+// 深色背景
+$dark-bg: #0a1628;
+$dark-card: #0d1f3c;
+$dark-border: #1a3a5c;
+
+// 渐变
+$gradient-blue: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%);
+$gradient-accent: linear-gradient(135deg, #00d4ff 0%, #1890ff 100%);
+$gradient-purple: linear-gradient(135deg, #722ed1 0%, #1890ff 100%);
+
+// 阴影
+$shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+$shadow-glow: 0 0 20px rgba(0, 212, 255, 0.3);
+$shadow-accent: 0 0 30px rgba(24, 144, 255, 0.3);
+
+// 字体大小 (4K适配)
+$font-xs: 14px;
+$font-sm: 16px;
+$font-base: 18px;
+$font-lg: 22px;
+$font-xl: 28px;
+$font-2xl: 36px;
+$font-3xl: 48px;
+
+// 间距
+$spacing-xs: 8px;
+$spacing-sm: 12px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+// 圆角
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+
+// 动画
+$transition-fast: 0.2s ease;
+$transition-normal: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// 混合器
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin card-base {
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+}
+
+@mixin glass-effect {
+  background: rgba(13, 31, 60, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(26, 58, 92, 0.6);
+  border-radius: $radius-lg;
+}
+
+@mixin glow-text {
+  color: $accent;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+@mixin gradient-text {
+  background: $gradient-accent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@mixin scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.3);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(0, 212, 255, 0.5);
+    }
+  }
+}

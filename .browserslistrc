@@ -1,0 +1,12 @@
+# Browsers that we support
+
+# Modern browsers
+Chrome >= 90
+Edge >= 90
+Firefox >= 90
+Safari >= 15
+Opera >= 76
+
+# Do not support IE
+not IE 11
+not IE_Mob 11
