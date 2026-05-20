@@ -1,130 +1,251 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, shallowRef } from 'vue'
+import AMapLoader from '@amap/amap-jsapi-loader'
 import { generateStationData, generateRadarData } from '@/mock/weather'
 import type { StationData, RadarData } from '@/mock/weather'
 
+const mapContainer = ref<HTMLElement>()
 const stations = ref<StationData[]>([])
 const radarData = ref<RadarData[]>([])
 const selectedStation = ref<StationData | null>(null)
-const mapContainer = ref<HTMLElement>()
+const mapReady = ref(false)
+const activeLayer = ref<'radar' | 'heatmap'>('radar')
 
-// 模拟地图中心点（北京）
-const center = { lat: 39.9042, lng: 116.4074 }
-const zoom = ref(10)
+// 地图实例使用 shallowRef 避免深度响应
+const map = shallowRef<any>(null)
+const AMap = shallowRef<any>(null)
 
-// 简化的地图渲染（实际项目中会使用高德地图或Mapbox）
-function renderMap() {
-  // 这里只是模拟地图效果
-  // 实际项目中需要集成真正的地图SDK
+// 北京中心坐标
+const center = [116.4074, 39.9042]
+
+// 高德地图 Key（开发测试用）
+const MAP_KEY = 'e377454ce255d259fa3e15a56865e1c9'
+
+async function initMap() {
+  try {
+    const AMapSdk = await AMapLoader.load({
+      key: MAP_KEY,
+      version: '2.0',
+      plugins: ['AMap.Scale', 'AMap.ToolBar', 'AMap.HeatMap']
+    })
+
+    AMap.value = AMapSdk
+
+    // 创建地图实例
+    map.value = new AMapSdk.Map(mapContainer.value, {
+      zoom: 10,
+      center: center,
+      mapStyle: 'amap://styles/dark',
+      viewMode: '2D'
+    })
+
+    // 添加控件
+    map.value.addControl(new AMapSdk.Scale())
+    map.value.addControl(new AMapSdk.ToolBar({ position: { bottom: '80px', right: '20px' } }))
+
+    // 添加站点标记
+    addStationMarkers()
+
+    // 添加雷达回波
+    addRadarOverlay()
+
+    mapReady.value = true
+  } catch (error) {
+    console.error('地图加载失败:', error)
+  }
+}
+
+function addStationMarkers() {
+  if (!map.value || !AMap.value) return
+
+  stations.value.forEach(station => {
+    // 创建标记
+    const marker = new AMap.value.Marker({
+      position: [station.lng, station.lat],
+      title: station.name,
+      label: {
+        content: station.name,
+        direction: 'top',
+        offset: [0, -8],
+        style: {
+          color: '#fff',
+          backgroundColor: 'rgba(13, 31, 60, 0.9)',
+          border: '1px solid #1a3a5c',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          fontSize: '12px'
+        }
+      }
+    })
+
+    // 点击事件
+    marker.on('click', () => {
+      selectedStation.value = station
+      showInfoWindow(station)
+    })
+
+    map.value.add(marker)
+  })
+}
+
+function showInfoWindow(station: StationData) {
+  if (!map.value || !AMap.value) return
+
+  const content = `
+    <div style="padding: 12px; min-width: 150px;">
+      <div style="font-size: 16px; font-weight: bold; color: #00d4ff; margin-bottom: 8px;">${station.name}</div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span style="color: rgba(255,255,255,0.6);">天气</span>
+        <span style="color: #fff;">${station.weatherText}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span style="color: rgba(255,255,255,0.6);">温度</span>
+        <span style="color: #fff;">${station.temperature}°C</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span style="color: rgba(255,255,255,0.6);">湿度</span>
+        <span style="color: #fff;">${station.humidity}%</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: rgba(255,255,255,0.6);">风速</span>
+        <span style="color: #fff;">${station.windSpeed} m/s</span>
+      </div>
+    </div>
+  `
+
+  const infoWindow = new AMap.value.InfoWindow({
+    content: content,
+    offset: new AMap.value.Pixel(0, -30),
+    isCustom: true
+  })
+
+  infoWindow.open(map.value, [station.lng, station.lat])
+}
+
+function addRadarOverlay() {
+  if (!map.value || !AMap.value) return
+
+  // 添加雷达回波覆盖物（使用圆形模拟）
+  radarData.value.forEach(item => {
+    const color = getRadarColor(item.type)
+    const circle = new AMap.value.Circle({
+      center: [item.lng, item.lat],
+      radius: 2000 + item.intensity * 3000,
+      strokeColor: color,
+      strokeWeight: 0,
+      fillColor: color,
+      fillOpacity: item.intensity * 0.6
+    })
+
+    map.value.add(circle)
+  })
+}
+
+function getRadarColor(type: string): string {
+  switch (type) {
+    case 'light': return '#52c41a'
+    case 'moderate': return '#1890ff'
+    case 'heavy': return '#fa8c16'
+    case 'extreme': return '#f5222d'
+    default: return '#1890ff'
+  }
+}
+
+function toggleLayer() {
+  activeLayer.value = activeLayer.value === 'radar' ? 'heatmap' : 'radar'
+  // 实际项目中这里切换图层显示
 }
 
 onMounted(() => {
   stations.value = generateStationData()
   radarData.value = generateRadarData()
-  renderMap()
+  initMap()
+})
+
+onUnmounted(() => {
+  if (map.value) {
+    map.value.destroy()
+  }
 })
 </script>
 
 <template>
-  <div class="radar-map" ref="mapContainer">
-    <!-- 地图背景 -->
-    <div class="map-background">
-      <div class="grid-overlay"></div>
-      <div class="radar-sweep"></div>
+  <div class="radar-map">
+    <!-- 地图容器 -->
+    <div ref="mapContainer" class="map-container"></div>
+
+    <!-- 加载状态 -->
+    <div v-if="!mapReady" class="map-loading">
+      <div class="loading-spinner"></div>
+      <span>地图加载中...</span>
     </div>
 
-    <!-- 雷达回波层 -->
-    <div class="radar-layer">
-      <div
-        v-for="(item, index) in radarData"
-        :key="index"
-        class="radar-point"
-        :class="item.type"
-        :style="{
-          left: `${((item.lng - center.lng + 0.5) / 1.0) * 100}%`,
-          top: `${((center.lat - item.lat + 0.5) / 1.0) * 100}%`,
-          opacity: item.intensity
-        }"
-      ></div>
-    </div>
-
-    <!-- 站点标记层 -->
-    <div class="station-layer">
-      <div
-        v-for="station in stations"
-        :key="station.id"
-        class="station-marker"
-        :class="{ active: selectedStation?.id === station.id }"
-        :style="{
-          left: `${((station.lng - center.lng + 0.5) / 1.0) * 100}%`,
-          top: `${((center.lat - station.lat + 0.5) / 1.0) * 100}%`
-        }"
-        @click="selectedStation = station"
-      >
-        <div class="marker-dot"></div>
-        <div class="marker-pulse"></div>
-        <div class="marker-label">{{ station.name }}</div>
+    <!-- 地图控件层 -->
+    <div class="map-overlay">
+      <!-- 图层切换 -->
+      <div class="layer-controls">
+        <button
+          :class="['layer-btn', { active: activeLayer === 'radar' }]"
+          @click="activeLayer = 'radar'"
+        >
+          <span class="layer-icon">📡</span>
+          <span>雷达回波</span>
+        </button>
+        <button
+          :class="['layer-btn', { active: activeLayer === 'heatmap' }]"
+          @click="activeLayer = 'heatmap'"
+        >
+          <span class="layer-icon">🌡️</span>
+          <span>温度热力</span>
+        </button>
       </div>
-    </div>
 
-    <!-- 站点信息弹窗 -->
-    <div
-      v-if="selectedStation"
-      class="station-popup"
-      :style="{
-        left: `${((selectedStation.lng - center.lng + 0.5) / 1.0) * 100 + 2}%`,
-        top: `${((center.lat - selectedStation.lat + 0.5) / 1.0) * 100 - 5}%`
-      }"
-    >
-      <div class="popup-header">
-        <span class="popup-title">{{ selectedStation.name }}</span>
-        <span class="popup-close" @click="selectedStation = null">×</span>
-      </div>
-      <div class="popup-content">
-        <div class="popup-row">
-          <span class="popup-label">天气</span>
-          <span class="popup-value">{{ selectedStation.weatherText }}</span>
-        </div>
-        <div class="popup-row">
-          <span class="popup-label">温度</span>
-          <span class="popup-value">{{ selectedStation.temperature }}°C</span>
-        </div>
-        <div class="popup-row">
-          <span class="popup-label">湿度</span>
-          <span class="popup-value">{{ selectedStation.humidity }}%</span>
-        </div>
-        <div class="popup-row">
-          <span class="popup-label">风速</span>
-          <span class="popup-value">{{ selectedStation.windSpeed }}级</span>
+      <!-- 图例 -->
+      <div class="map-legend">
+        <div class="legend-title">回波强度</div>
+        <div class="legend-items">
+          <div class="legend-item">
+            <span class="legend-color" style="background: #52c41a"></span>
+            <span>弱</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #1890ff"></span>
+            <span>中</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #fa8c16"></span>
+            <span>强</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #f5222d"></span>
+            <span>极强</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 地图控件 -->
-    <div class="map-controls">
-      <button class="control-btn" @click="zoom = Math.min(zoom + 1, 15)">+</button>
-      <button class="control-btn" @click="zoom = Math.max(zoom - 1, 5)">-</button>
-    </div>
-
-    <!-- 图例 -->
-    <div class="map-legend">
-      <div class="legend-title">回波强度</div>
-      <div class="legend-items">
-        <div class="legend-item">
-          <span class="legend-color light"></span>
-          <span>弱</span>
+      <!-- 站点信息 -->
+      <div v-if="selectedStation" class="station-info">
+        <div class="info-header">
+          <span class="info-title">{{ selectedStation.name }}</span>
+          <span class="info-close" @click="selectedStation = null">×</span>
         </div>
-        <div class="legend-item">
-          <span class="legend-color moderate"></span>
-          <span>中</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color heavy"></span>
-          <span>强</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color extreme"></span>
-          <span>极强</span>
+        <div class="info-content">
+          <div class="info-row">
+            <span class="info-label">天气</span>
+            <span class="info-value">{{ selectedStation.weatherText }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">温度</span>
+            <span class="info-value">{{ selectedStation.temperature }}°C</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">湿度</span>
+            <span class="info-value">{{ selectedStation.humidity }}%</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">风速</span>
+            <span class="info-value">{{ selectedStation.windSpeed }} m/s</span>
+          </div>
         </div>
       </div>
     </div>
@@ -136,233 +257,82 @@ onMounted(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #0a1628 0%, #0d2137 100%);
   border-radius: $radius-lg;
   overflow: hidden;
 }
 
-.map-background {
+.map-container {
+  width: 100%;
+  height: 100%;
+}
+
+.map-loading {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-md;
+  background: rgba(10, 22, 40, 0.9);
+  color: $accent;
+  font-size: $font-sm;
 }
 
-.grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
-  background-size: 50px 50px;
-}
-
-.radar-sweep {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 200%;
-  height: 200%;
-  transform: translate(-50%, -50%);
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(0, 212, 255, 0.1) 30deg,
-    transparent 60deg
-  );
-  animation: rotate 8s linear infinite;
-}
-
-.radar-layer {
-  position: absolute;
-  inset: 0;
-}
-
-.radar-point {
-  position: absolute;
-  width: 20px;
-  height: 20px;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 212, 255, 0.2);
+  border-top-color: $accent;
   border-radius: 50%;
-  transform: translate(-50%, -50%);
-  filter: blur(5px);
-
-  &.light {
-    background: #52c41a;
-    box-shadow: 0 0 15px rgba(82, 196, 26, 0.5);
-  }
-
-  &.moderate {
-    background: #1890ff;
-    box-shadow: 0 0 15px rgba(24, 144, 255, 0.5);
-  }
-
-  &.heavy {
-    background: #fa8c16;
-    box-shadow: 0 0 15px rgba(250, 140, 22, 0.5);
-  }
-
-  &.extreme {
-    background: #f5222d;
-    box-shadow: 0 0 15px rgba(245, 34, 45, 0.5);
-  }
+  animation: spin 1s linear infinite;
 }
 
-.station-layer {
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.map-overlay {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
-.station-marker {
+.layer-controls {
   position: absolute;
-  transform: translate(-50%, -50%);
+  top: $spacing-lg;
+  left: $spacing-lg;
+  display: flex;
+  gap: $spacing-sm;
+  pointer-events: auto;
+}
+
+.layer-btn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: 8px 16px;
+  background: rgba(13, 31, 60, 0.9);
+  border: 1px solid #1a3a5c;
+  border-radius: $radius-md;
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  z-index: 10;
+  transition: all $transition-fast;
 
   &:hover {
-    z-index: 20;
-
-    .marker-dot {
-      transform: scale(1.3);
-    }
-
-    .marker-label {
-      opacity: 1;
-    }
+    background: rgba(0, 212, 255, 0.1);
+    border-color: rgba(0, 212, 255, 0.3);
   }
 
   &.active {
-    .marker-dot {
-      transform: scale(1.5);
-      background: #00d4ff;
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
-    }
-  }
-}
-
-.marker-dot {
-  width: 12px;
-  height: 12px;
-  background: #fff;
-  border: 2px solid #00d4ff;
-  border-radius: 50%;
-  transition: all $transition-fast;
-}
-
-.marker-pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 40px;
-  height: 40px;
-  transform: translate(-50%, -50%);
-  border: 2px solid rgba(0, 212, 255, 0.5);
-  border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.marker-label {
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  padding: 4px 8px;
-  background: rgba(13, 31, 60, 0.9);
-  border: 1px solid #1a3a5c;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #fff;
-  opacity: 0;
-  transition: opacity $transition-fast;
-}
-
-.station-popup {
-  position: absolute;
-  width: 200px;
-  background: rgba(13, 31, 60, 0.95);
-  border: 1px solid #1a3a5c;
-  border-radius: $radius-md;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  z-index: 100;
-  animation: fadeIn 0.3s ease;
-}
-
-.popup-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  border-bottom: 1px solid #1a3a5c;
-}
-
-.popup-title {
-  font-size: $font-base;
-  font-weight: bold;
-  color: $accent;
-}
-
-.popup-close {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.6);
-
-  &:hover {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: $accent;
     color: #fff;
   }
 }
 
-.popup-content {
-  padding: 12px;
-}
-
-.popup-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid rgba(26, 58, 92, 0.5);
-  }
-}
-
-.popup-label {
-  font-size: $font-sm;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.popup-value {
-  font-size: $font-sm;
-  font-weight: bold;
-  color: #fff;
-}
-
-.map-controls {
-  position: absolute;
-  top: $spacing-lg;
-  right: $spacing-lg;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
-}
-
-.control-btn {
-  width: 40px;
-  height: 40px;
-  background: rgba(13, 31, 60, 0.9);
-  border: 1px solid #1a3a5c;
-  border-radius: $radius-sm;
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
-  transition: all $transition-fast;
-
-  &:hover {
-    background: rgba(0, 212, 255, 0.2);
-    border-color: $accent;
-  }
+.layer-icon {
+  font-size: 16px;
 }
 
 .map-legend {
@@ -373,6 +343,7 @@ onMounted(() => {
   border: 1px solid #1a3a5c;
   border-radius: $radius-md;
   padding: $spacing-md;
+  pointer-events: auto;
 }
 
 .legend-title {
@@ -399,21 +370,85 @@ onMounted(() => {
   width: 16px;
   height: 16px;
   border-radius: 3px;
+}
 
-  &.light {
-    background: #52c41a;
-  }
+.station-info {
+  position: absolute;
+  top: $spacing-lg;
+  right: $spacing-lg;
+  width: 220px;
+  background: rgba(13, 31, 60, 0.95);
+  border: 1px solid #1a3a5c;
+  border-radius: $radius-md;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  animation: fadeIn 0.3s ease;
+}
 
-  &.moderate {
-    background: #1890ff;
-  }
+.info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid #1a3a5c;
+}
 
-  &.heavy {
-    background: #fa8c16;
-  }
+.info-title {
+  font-size: $font-base;
+  font-weight: bold;
+  color: $accent;
+}
 
-  &.extreme {
-    background: #f5222d;
+.info-close {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+
+  &:hover {
+    color: #fff;
   }
+}
+
+.info-content {
+  padding: 12px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(26, 58, 92, 0.5);
+  }
+}
+
+.info-label {
+  font-size: $font-sm;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.info-value {
+  font-size: $font-sm;
+  font-weight: bold;
+  color: #fff;
+}
+
+// 高德地图信息窗口自定义样式
+:deep(.amap-info-content) {
+  background: rgba(13, 31, 60, 0.95) !important;
+  border: 1px solid #1a3a5c !important;
+  border-radius: $radius-md !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+:deep(.amap-info-sharp) {
+  border-top-color: #1a3a5c !important;
 }
 </style>

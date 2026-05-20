@@ -7,18 +7,36 @@ import AiChatDrawer from '@/components/ai-chat/AiChatDrawer.vue'
 const appStore = useAppStore()
 const currentTime = ref(dayjs().format('HH:mm:ss'))
 const currentDate = ref(dayjs().format('YYYY年MM月DD日'))
+const isFullscreen = ref(false)
 
 let timer: ReturnType<typeof setInterval>
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen()
+    isFullscreen.value = true
+  } else {
+    document.exitFullscreen()
+    isFullscreen.value = false
+  }
+}
+
+function handleFullscreenChange() {
+  isFullscreen.value = !!document.fullscreenElement
+}
 
 onMounted(() => {
   timer = setInterval(() => {
     currentTime.value = dayjs().format('HH:mm:ss')
     currentDate.value = dayjs().format('YYYY年MM月DD日')
   }, 1000)
+
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
 })
 
 onUnmounted(() => {
   clearInterval(timer)
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
 })
 </script>
 
@@ -42,16 +60,26 @@ onUnmounted(() => {
       </div>
 
       <div class="header-right">
-        <n-button quaternary circle class="header-btn" @click="appStore.toggleAiDrawer">
-          <template #icon>
-            <span class="btn-icon">🤖</span>
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-button quaternary circle class="header-btn" @click="appStore.toggleAiDrawer">
+              <template #icon>
+                <span class="btn-icon">🤖</span>
+              </template>
+            </n-button>
           </template>
-        </n-button>
-        <n-button quaternary circle class="header-btn">
-          <template #icon>
-            <span class="btn-icon">⚙️</span>
+          AI气象助手
+        </n-tooltip>
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-button quaternary circle class="header-btn" @click="toggleFullscreen">
+              <template #icon>
+                <span class="btn-icon">{{ isFullscreen ? '🔲' : '⛶' }}</span>
+              </template>
+            </n-button>
           </template>
-        </n-button>
+          {{ isFullscreen ? '退出全屏' : '全屏模式' }}
+        </n-tooltip>
       </div>
     </header>
 
@@ -106,6 +134,7 @@ onUnmounted(() => {
 }
 
 .dashboard-header {
+  position: relative;
   height: 80px;
   display: flex;
   align-items: center;
@@ -115,6 +144,22 @@ onUnmounted(() => {
   border-bottom: 1px solid $dark-border;
   backdrop-filter: blur(10px);
   z-index: 10;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, $accent, $purple, $accent, transparent);
+    animation: headerGlow 3s ease-in-out infinite;
+  }
+}
+
+@keyframes headerGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 .header-left {
