@@ -240,7 +240,7 @@ function updateChart() {
     series: [
       {
         name: '气象数据',
-        type: 'map',
+        type: 'map' as const,
         geoIndex: 0,
         data: getMapData(),
       },
@@ -248,8 +248,8 @@ function updateChart() {
         ? [
             {
               name: '站点',
-              type: 'scatter',
-              coordinateSystem: 'geo',
+              type: 'scatter' as const,
+              coordinateSystem: 'geo' as const,
               data: getScatterData(),
               symbol: 'circle',
               symbolSize: (val: any) => {
@@ -258,7 +258,7 @@ function updateChart() {
               label: {
                 show: true,
                 formatter: '{b}',
-                position: 'right',
+                position: 'right' as const,
                 color: 'rgba(255,255,255,0.8)',
                 fontSize: 10,
               },
