@@ -108,7 +108,17 @@ function getScatterData() {
 }
 
 async function loadMapGeoJson(): Promise<any> {
-  // 尝试从 CDN 加载
+  // 从本地 public 目录加载
+  try {
+    const resp = await fetch('./china.json')
+    if (resp.ok) {
+      return await resp.json()
+    }
+  } catch {
+    console.error('本地地图数据加载失败')
+  }
+
+  // 如果本地失败，尝试从 CDN 加载
   const urls = [
     'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
     'https://geojson.cn/api/data/100000_full.json',
@@ -125,7 +135,6 @@ async function loadMapGeoJson(): Promise<any> {
     }
   }
 
-  // 如果都失败，返回 null
   return null
 }
 
