@@ -5,13 +5,33 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'Dashboard',
-      component: () => import('@/views/dashboard/index.vue'),
+      redirect: '/overview',
+    },
+    {
+      path: '/overview',
+      name: 'Overview',
+      component: () => import('@/views/overview/index.vue'),
       meta: {
-        title: '气象雷达预测系统'
-      }
-    }
-  ]
+        title: '气象雷达预测系统 - 总览',
+      },
+    },
+    {
+      path: '/map',
+      name: 'Map',
+      component: () => import('@/views/map/index.vue'),
+      meta: {
+        title: '气象雷达预测系统 - 地图中心',
+      },
+    },
+    {
+      path: '/warning',
+      name: 'Warning',
+      component: () => import('@/views/warning/index.vue'),
+      meta: {
+        title: '气象雷达预测系统 - 预警中心',
+      },
+    },
+  ],
 })
 
 router.beforeEach((to, _from, next) => {

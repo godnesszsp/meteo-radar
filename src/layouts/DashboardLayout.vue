@@ -1,15 +1,29 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 import { useAppStore } from '@/stores/app'
 import AiChatDrawer from '@/components/ai-chat/AiChatDrawer.vue'
 
+const router = useRouter()
+const route = useRoute()
 const appStore = useAppStore()
 const currentTime = ref(dayjs().format('HH:mm:ss'))
 const currentDate = ref(dayjs().format('YYYY年MM月DD日'))
 const isFullscreen = ref(false)
 
 let timer: ReturnType<typeof setInterval>
+
+// 导航菜单
+const navItems = [
+  { path: '/overview', label: '总览大屏', icon: '📊' },
+  { path: '/map', label: '地图中心', icon: '🗺️' },
+  { path: '/warning', label: '预警中心', icon: '⚠️' },
+]
+
+function navigateTo(path: string) {
+  router.push(path)
+}
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
@@ -53,13 +67,25 @@ onUnmounted(() => {
       </div>
 
       <div class="header-center">
+        <!-- 页面导航 -->
+        <nav class="page-nav">
+          <button
+            v-for="item in navItems"
+            :key="item.path"
+            :class="['nav-btn', { active: route.path === item.path }]"
+            @click="navigateTo(item.path)"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="header-right">
         <div class="time-display">
           <span class="time">{{ currentTime }}</span>
           <span class="date">{{ currentDate }}</span>
         </div>
-      </div>
-
-      <div class="header-right">
         <n-tooltip trigger="hover">
           <template #trigger>
             <n-button quaternary circle class="header-btn" @click="appStore.toggleAiDrawer">
@@ -197,15 +223,56 @@ onUnmounted(() => {
   transform: translateX(-50%);
 }
 
+.page-nav {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: 8px 20px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: $radius-md;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.4);
+    color: #fff;
+  }
+
+  &.active {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: $accent;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+  }
+}
+
+.nav-icon {
+  font-size: 18px;
+}
+
+.nav-label {
+  font-size: $font-sm;
+  font-weight: 500;
+}
+
 .time-display {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
+  margin-right: $spacing-md;
 }
 
 .time {
   font-family: 'DIN', monospace;
-  font-size: $font-3xl;
+  font-size: $font-xl;
   font-weight: bold;
   color: $accent;
   text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
