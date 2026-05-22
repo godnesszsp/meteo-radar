@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import ChinaMap from '@/components/map/ChinaMap.vue'
-import { generateWarningData, warningColors, warningIcons } from '@/mock/weather'
+import { useWarningStore } from '@/stores/warning'
+import { warningColors, warningIcons } from '@/mock/weather'
 import type { WarningData, WarningLevel } from '@/mock/weather'
 
-const warnings = ref<WarningData[]>(generateWarningData())
+const warningStore = useWarningStore()
 const selectedWarning = ref<WarningData | null>(null)
 const filterLevel = ref<WarningLevel | 'all'>('all')
 
-let refreshTimer: ReturnType<typeof setInterval>
+const warnings = computed(() => warningStore.warnings)
 
 // 筛选后的预警列表
 const filteredWarnings = computed(() => {
@@ -18,22 +19,16 @@ const filteredWarnings = computed(() => {
 })
 
 // 预警统计
-const warningStats = computed(() => {
-  const stats = { red: 0, orange: 0, yellow: 0, blue: 0 }
-  warnings.value.forEach(w => {
-    stats[w.level]++
-  })
-  return stats
-})
+const warningStats = computed(() => warningStore.warningStats)
 
 // 筛选选项
-const filterOptions = [
+const filterOptions = computed(() => [
   { value: 'all', label: '全部', count: warnings.value.length },
   { value: 'red', label: '红色', count: warningStats.value.red },
   { value: 'orange', label: '橙色', count: warningStats.value.orange },
   { value: 'yellow', label: '黄色', count: warningStats.value.yellow },
   { value: 'blue', label: '蓝色', count: warningStats.value.blue },
-]
+])
 
 // 选择预警
 function selectWarning(warning: WarningData) {
@@ -61,15 +56,21 @@ function getLevelClass(level: WarningLevel): string {
   return `level-${level}`
 }
 
-onMounted(() => {
-  // 每30秒刷新预警数据
-  refreshTimer = setInterval(() => {
-    warnings.value = generateWarningData()
-  }, 30000)
-})
-
-onUnmounted(() => {
-  clearInterval(refreshTimer)
+// 响应预警联动高亮
+watch(() => warningStore.highlightedWarningId, async (id) => {
+  if (id) {
+    const warning = warnings.value.find(w => w.id === id)
+    if (warning) {
+      selectedWarning.value = warning
+      filterLevel.value = 'all'
+      await nextTick()
+      const el = document.querySelector(`[data-warning-id="${id}"]`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+    setTimeout(() => {
+      warningStore.clearHighlight()
+    }, 3000)
+  }
 })
 </script>
 
@@ -109,7 +110,8 @@ onUnmounted(() => {
             <div
               v-for="warning in filteredWarnings"
               :key="warning.id"
-              :class="['warning-item', warning.level, { active: selectedWarning?.id === warning.id }]"
+              :data-warning-id="warning.id"
+              :class="['warning-item', warning.level, { active: selectedWarning?.id === warning.id, highlight: warningStore.highlightedWarningId === warning.id }]"
               @click="selectWarning(warning)"
             >
               <div class="warning-header">
@@ -372,6 +374,11 @@ onUnmounted(() => {
   &.active {
     background: rgba(0, 212, 255, 0.1);
     border-color: $accent;
+  }
+
+  &.highlight {
+    animation: highlightPulse 1s ease-in-out 3;
+    border-color: $accent !important;
   }
 
   &.red {
@@ -640,6 +647,11 @@ onUnmounted(() => {
     color: rgba(255, 255, 255, 0.7);
     line-height: 2;
   }
+}
+
+@keyframes highlightPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 212, 255, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(0, 212, 255, 0.8); }
 }
 
 // 过渡动画

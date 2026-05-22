@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AiChatDrawer: typeof import('./components/ai-chat/AiChatDrawer.vue')['default']
     AirQualityChart: typeof import('./components/charts/AirQualityChart.vue')['default']
+    AlertBanner: typeof import('./components/alert/AlertBanner.vue')['default']
     ChinaMap: typeof import('./components/map/ChinaMap.vue')['default']
     DataCard: typeof import('./components/cards/DataCard.vue')['default']
     ForecastChart: typeof import('./components/charts/ForecastChart.vue')['default']

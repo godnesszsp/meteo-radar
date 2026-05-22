@@ -3,11 +3,16 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 import { useAppStore } from '@/stores/app'
+import { useWarningStore } from '@/stores/warning'
+import { useAlertChain } from '@/composables/useAlertChain'
 import AiChatDrawer from '@/components/ai-chat/AiChatDrawer.vue'
+import AlertBanner from '@/components/alert/AlertBanner.vue'
 
 const router = useRouter()
 const route = useRoute()
 const appStore = useAppStore()
+const warningStore = useWarningStore()
+const { requestNotificationPermission } = useAlertChain()
 const currentTime = ref(dayjs().format('HH:mm:ss'))
 const currentDate = ref(dayjs().format('YYYY年MM月DD日'))
 const isFullscreen = ref(false)
@@ -46,11 +51,17 @@ onMounted(() => {
   }, 1000)
 
   document.addEventListener('fullscreenchange', handleFullscreenChange)
+  warningStore.startPolling(30000)
+
+  document.addEventListener('click', () => {
+    requestNotificationPermission()
+  }, { once: true })
 })
 
 onUnmounted(() => {
   clearInterval(timer)
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  warningStore.stopPolling()
 })
 </script>
 
@@ -134,7 +145,7 @@ onUnmounted(() => {
       <div class="status-item">
         <span class="status-icon">⚠️</span>
         <span class="status-label">预警信息</span>
-        <span class="status-value warning">3 条</span>
+        <span class="status-value warning">{{ warningStore.warnings.length }} 条</span>
       </div>
       <div class="status-item">
         <span class="status-icon">📊</span>
@@ -145,6 +156,9 @@ onUnmounted(() => {
 
     <!-- AI对话抽屉 -->
     <AiChatDrawer />
+
+    <!-- 预警联动弹窗 -->
+    <AlertBanner />
   </div>
 </template>
 
