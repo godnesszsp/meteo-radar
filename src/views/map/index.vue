@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import ChinaMap from '@/components/map/ChinaMap.vue'
 import { generateChinaData, weatherIconMap, getAqiLevel } from '@/mock/china'
@@ -44,6 +44,11 @@ const stats = ref({
   avgAqi: Math.round(provinces.value.reduce((sum, p) => sum + p.aqi, 0) / provinces.value.length),
   alertCount: provinces.value.filter(p => p.aqi > 150).length,
 })
+
+// 24小时温度趋势数据（一次性生成，避免模板中 Math.random 导致重渲染抖动）
+const miniBarData = computed(() =>
+  Array.from({ length: 24 }, () => 30 + Math.random() * 70)
+)
 </script>
 
 <template>
@@ -175,7 +180,7 @@ const stats = ref({
                 <div
                   class="bar-fill"
                   :style="{
-                    height: `${30 + Math.random() * 70}%`,
+                    height: `${miniBarData[i - 1]}%`,
                     background: `linear-gradient(to top, rgba(0,212,255,0.3), rgba(0,212,255,0.8))`,
                   }"
                 ></div>
@@ -200,11 +205,16 @@ const stats = ref({
 }
 
 .control-panel {
-  width: 280px;
+  width: clamp(240px, 10vw, 320px);
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
   animation: slideInLeft 0.6s ease;
+
+  @include respond-to('hd') {
+    width: clamp(200px, 10vw, 260px);
+    gap: $spacing-md;
+  }
 }
 
 .panel-section {
@@ -276,6 +286,10 @@ const stats = ref({
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: $spacing-sm;
+
+  @include respond-to('hd') {
+    gap: $spacing-xs;
+  }
 }
 
 .stat-item {
@@ -346,10 +360,15 @@ const stats = ref({
 }
 
 .detail-panel {
-  width: 320px;
+  width: clamp(280px, 10vw, 360px);
   @include card-base;
   padding: $spacing-lg;
   animation: slideInRight 0.3s ease;
+
+  @include respond-to('hd') {
+    width: clamp(240px, 10vw, 300px);
+    padding: $spacing-md;
+  }
 }
 
 .detail-header {

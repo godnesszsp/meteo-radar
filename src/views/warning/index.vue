@@ -242,11 +242,20 @@ watch(() => warningStore.highlightedWarningId, async (id) => {
 }
 
 .warning-panel {
-  width: 380px;
+  width: clamp(300px, 12vw, 420px);
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
   animation: slideInLeft 0.6s ease;
+
+  @include respond-to('fhd') {
+    width: clamp(280px, 12vw, 380px);
+  }
+
+  @include respond-to('hd') {
+    width: clamp(260px, 12vw, 340px);
+    gap: $spacing-md;
+  }
 }
 
 .stats-card {
@@ -281,6 +290,10 @@ watch(() => warningStore.highlightedWarningId, async (id) => {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: $spacing-sm;
+
+  @include respond-to('hd') {
+    gap: $spacing-xs;
+  }
 }
 
 .stat-item {
@@ -484,13 +497,18 @@ watch(() => warningStore.highlightedWarningId, async (id) => {
 }
 
 .detail-panel {
-  width: 360px;
+  width: clamp(300px, 12vw, 400px);
   @include card-base;
   padding: $spacing-lg;
   animation: slideInRight 0.3s ease;
   overflow-y: auto;
 
   @include scrollbar;
+
+  @include respond-to('hd') {
+    width: clamp(260px, 12vw, 340px);
+    padding: $spacing-md;
+  }
 }
 
 .detail-header {

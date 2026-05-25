@@ -17,7 +17,6 @@ declare module 'vue' {
     ChinaMap: typeof import('./components/map/ChinaMap.vue')['default']
     DataCard: typeof import('./components/cards/DataCard.vue')['default']
     ForecastChart: typeof import('./components/charts/ForecastChart.vue')['default']
-    HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     NButton: typeof import('naive-ui')['NButton']
     NDrawer: typeof import('naive-ui')['NDrawer']
     NDrawerContent: typeof import('naive-ui')['NDrawerContent']

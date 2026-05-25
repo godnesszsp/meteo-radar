@@ -88,6 +88,17 @@ $transition-slow: 0.5s ease;
   background-clip: text;
 }
 
+// 响应式断点
+@mixin respond-to($bp) {
+  @if $bp == '4k' {
+    @media (min-width: 2560px) { @content; }
+  } @else if $bp == 'fhd' {
+    @media (max-width: 1920px) { @content; }
+  } @else if $bp == 'hd' {
+    @media (max-width: 1366px) { @content; }
+  }
+}
+
 @mixin scrollbar {
   &::-webkit-scrollbar {
     width: 6px;

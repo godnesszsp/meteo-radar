@@ -31,6 +31,10 @@ const router = createRouter({
         title: '气象雷达预测系统 - 预警中心',
       },
     },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/overview',
+    },
   ],
 })
 

@@ -185,6 +185,11 @@ onUnmounted(() => {
   backdrop-filter: blur(10px);
   z-index: 10;
 
+  @include respond-to('hd') {
+    height: 60px;
+    padding: 0 $spacing-lg;
+  }
+
   &::after {
     content: '';
     position: absolute;
@@ -229,6 +234,11 @@ onUnmounted(() => {
   font-weight: bold;
   letter-spacing: 4px;
   @include glow-text;
+
+  @include respond-to('hd') {
+    font-size: $font-xl;
+    letter-spacing: 2px;
+  }
 }
 
 .header-center {
@@ -275,6 +285,10 @@ onUnmounted(() => {
 .nav-label {
   font-size: $font-sm;
   font-weight: 500;
+
+  @include respond-to('hd') {
+    font-size: $font-xs;
+  }
 }
 
 .time-display {
@@ -290,6 +304,10 @@ onUnmounted(() => {
   font-weight: bold;
   color: $accent;
   text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+
+  @include respond-to('hd') {
+    font-size: $font-lg;
+  }
 }
 
 .date {
@@ -314,6 +332,11 @@ onUnmounted(() => {
     border-color: $accent;
     box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
   }
+
+  @include respond-to('hd') {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .btn-icon {
@@ -326,6 +349,11 @@ onUnmounted(() => {
   padding: $spacing-lg;
   gap: $spacing-lg;
   overflow: hidden;
+
+  @include respond-to('hd') {
+    padding: $spacing-md;
+    gap: $spacing-md;
+  }
 }
 
 .dashboard-footer {
@@ -337,6 +365,11 @@ onUnmounted(() => {
   background: rgba(13, 31, 60, 0.9);
   border-top: 1px solid $dark-border;
   backdrop-filter: blur(10px);
+
+  @include respond-to('hd') {
+    height: 48px;
+    padding: 0 $spacing-lg;
+  }
 }
 
 .status-item {
@@ -368,6 +401,10 @@ onUnmounted(() => {
 .status-label {
   font-size: $font-sm;
   color: rgba(255, 255, 255, 0.6);
+
+  @include respond-to('hd') {
+    font-size: $font-xs;
+  }
 }
 
 .status-value {
@@ -377,6 +414,10 @@ onUnmounted(() => {
 
   &.warning {
     color: $warning;
+  }
+
+  @include respond-to('hd') {
+    font-size: $font-xs;
   }
 }
 </style>

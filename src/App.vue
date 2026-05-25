@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { onErrorCaptured } from 'vue'
 import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider, dateZhCN, zhCN } from 'naive-ui'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
+
+onErrorCaptured((err, instance, info) => {
+  if (import.meta.env.DEV) {
+    console.error('[ErrorBoundary]', err, info)
+  }
+  return false
+})
 </script>
 
 <template>

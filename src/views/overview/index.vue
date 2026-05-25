@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import DataCard from '@/components/cards/DataCard.vue'
 import ChinaMap from '@/components/map/ChinaMap.vue'
@@ -7,33 +7,18 @@ import TemperatureChart from '@/components/charts/TemperatureChart.vue'
 import ForecastChart from '@/components/charts/ForecastChart.vue'
 import WarningList from '@/components/cards/WarningList.vue'
 import AirQualityChart from '@/components/charts/AirQualityChart.vue'
-import WindRoseChart from '@/components/charts/WindRoseChart.vue'
-import {
-  generateRealtimeData,
-  generateForecastData,
-  generateWarningData,
-  generateHourlyTemp,
-  generateWindRoseData,
-} from '@/mock/weather'
-import type { RealtimeData, ForecastData, WarningData } from '@/mock/weather'
+import { useWeatherStore } from '@/stores/weather'
+import { useWarningStore } from '@/stores/warning'
 
-const realtimeData = ref<RealtimeData>(generateRealtimeData())
-const forecastData = ref<ForecastData[]>(generateForecastData())
-const warnings = ref<WarningData[]>(generateWarningData())
-const hourlyTemp = ref(generateHourlyTemp())
-const windRoseData = ref(generateWindRoseData())
-
-let dataTimer: ReturnType<typeof setInterval>
+const weatherStore = useWeatherStore()
+const warningStore = useWarningStore()
 
 onMounted(() => {
-  // 每5秒更新实时数据
-  dataTimer = setInterval(() => {
-    realtimeData.value = generateRealtimeData()
-  }, 5000)
+  weatherStore.startPolling(5000)
 })
 
 onUnmounted(() => {
-  clearInterval(dataTimer)
+  weatherStore.stopPolling()
 })
 </script>
 
@@ -45,7 +30,7 @@ onUnmounted(() => {
       <div class="data-cards">
         <DataCard
           title="温度"
-          :value="realtimeData.temperature"
+          :value="weatherStore.realtime.temperature"
           unit="°C"
           icon="🌡️"
           trend="up"
@@ -53,7 +38,7 @@ onUnmounted(() => {
         />
         <DataCard
           title="湿度"
-          :value="realtimeData.humidity"
+          :value="weatherStore.realtime.humidity"
           unit="%"
           icon="💧"
           trend="stable"
@@ -61,15 +46,15 @@ onUnmounted(() => {
         />
         <DataCard
           title="风速"
-          :value="realtimeData.windSpeed"
+          :value="weatherStore.realtime.windSpeed"
           unit="m/s"
           icon="💨"
-          :trend="realtimeData.windSpeed > 5 ? 'up' : 'down'"
+          :trend="weatherStore.realtime.windSpeed > 5 ? 'up' : 'down'"
           color="#52c41a"
         />
         <DataCard
           title="气压"
-          :value="realtimeData.pressure"
+          :value="weatherStore.realtime.pressure"
           unit="hPa"
           icon="📊"
           trend="stable"
@@ -79,7 +64,7 @@ onUnmounted(() => {
 
       <!-- 24小时温度曲线 -->
       <div class="chart-container">
-        <TemperatureChart :data="hourlyTemp" />
+        <TemperatureChart :data="weatherStore.hourlyTemp" />
       </div>
     </div>
 
@@ -98,17 +83,17 @@ onUnmounted(() => {
     <div class="right-panel">
       <!-- 7天预测 -->
       <div class="chart-container">
-        <ForecastChart :data="forecastData" />
+        <ForecastChart :data="weatherStore.forecast" />
       </div>
 
       <!-- 预警信息 -->
       <div class="warning-container">
-        <WarningList :warnings="warnings" />
+        <WarningList :warnings="warningStore.warnings" />
       </div>
 
       <!-- 空气质量 -->
       <div class="chart-container small">
-        <AirQualityChart :data="realtimeData.airQuality" />
+        <AirQualityChart :data="weatherStore.realtime.airQuality" />
       </div>
     </div>
   </DashboardLayout>
@@ -116,30 +101,53 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .left-panel {
-  width: 480px;
+  width: clamp(320px, 15vw, 520px);
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
   animation: slideInLeft 0.8s ease;
+
+  @include respond-to('fhd') {
+    width: clamp(300px, 14vw, 440px);
+  }
+
+  @include respond-to('hd') {
+    width: clamp(260px, 14vw, 360px);
+    gap: $spacing-md;
+  }
 }
 
 .center-panel {
   flex: 1;
+  min-width: 0;
   animation: fadeIn 1s ease;
 }
 
 .right-panel {
-  width: 480px;
+  width: clamp(320px, 15vw, 520px);
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
   animation: slideInRight 0.8s ease;
+
+  @include respond-to('fhd') {
+    width: clamp(300px, 14vw, 440px);
+  }
+
+  @include respond-to('hd') {
+    width: clamp(260px, 14vw, 360px);
+    gap: $spacing-md;
+  }
 }
 
 .data-cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: $spacing-md;
+
+  @include respond-to('hd') {
+    gap: $spacing-sm;
+  }
 }
 
 .chart-container {
@@ -149,6 +157,11 @@ onUnmounted(() => {
   &.small {
     min-height: 200px;
     flex: none;
+  }
+
+  @include respond-to('hd') {
+    min-height: 220px;
+    &.small { min-height: 160px; }
   }
 }
 

@@ -115,7 +115,7 @@ async function loadMapGeoJson(): Promise<any> {
       return await resp.json()
     }
   } catch {
-    console.error('本地地图数据加载失败')
+    // 本地加载失败，尝试 CDN
   }
 
   // 如果本地失败，尝试从 CDN 加载
@@ -143,10 +143,7 @@ async function initChart() {
 
   // 加载地图 GeoJSON
   const geoJson = await loadMapGeoJson()
-  if (!geoJson) {
-    console.error('中国地图数据加载失败')
-    return
-  }
+  if (!geoJson) return
 
   // 注册地图
   echarts.registerMap('china', geoJson)
@@ -303,17 +300,18 @@ function handleClick(params: any) {
   }
 }
 
+function handleResize() {
+  chart.value?.resize()
+}
+
 onMounted(() => {
   initChart()
-
-  window.addEventListener('resize', () => {
-    chart.value?.resize()
-  })
-
+  window.addEventListener('resize', handleResize)
   chart.value?.on('click', handleClick)
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
   chart.value?.off('click', handleClick)
   chart.value?.dispose()
 })

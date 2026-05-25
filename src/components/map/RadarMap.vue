@@ -19,8 +19,8 @@ const AMap = shallowRef<any>(null)
 // 北京中心坐标
 const center = [116.4074, 39.9042]
 
-// 高德地图 Key（从环境变量读取，需在 .env 中配置）
-const MAP_KEY = import.meta.env.VITE_MAP_KEY || 'e377454ce255d259fa3e15a56865e1c9'
+// 高德地图 Key（从环境变量读取，需在 .env 中配置 VITE_MAP_KEY）
+const MAP_KEY = import.meta.env.VITE_MAP_KEY || ''
 
 async function initMap() {
   try {
@@ -42,7 +42,6 @@ async function initMap() {
 
     // 监听地图鉴权失败（如 Key 无效）
     map.value.on('error', () => {
-      console.warn('地图鉴权失败，使用备用显示')
       mapError.value = true
       mapReady.value = false
     })
@@ -58,8 +57,7 @@ async function initMap() {
     addRadarOverlay()
 
     mapReady.value = true
-  } catch (error) {
-    console.error('地图加载失败:', error)
+  } catch {
     mapError.value = true
   }
 }
