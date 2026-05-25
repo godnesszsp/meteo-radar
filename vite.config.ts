@@ -10,7 +10,7 @@ export default defineConfig({
   base: '/meteo-radar/',
   plugins: [
     vue(),
-    UnoCSS(),
+    ...UnoCSS(),
     AutoImport({
       imports: [
         'vue',
